@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Calculator Live</title>
+    <style>
+        /* CSS - Green Theme & Layout */
+        :root {
+            --primary-green: #00ff41;
+            --dark-green: #001a00;
+            --card-bg: #002b00;
+            --text-white: #ffffff;
+            --border-color: #004d00;
+            --loss-red: #ff3333;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace; /* Hacker/Tech vibe */
+        }
+
+        body {
+            background-color: var(--dark-green);
+            color: var(--text-white);
+            padding-bottom: 50px;
+        }
+
+        header {
+            background-color: var(--card-bg);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border-bottom: 2px solid var(--primary-green);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--primary-green);
+            font-size: 1.5rem;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        /* Language Selector */
+        .lang-select {
+            background-color: #001100;
+            color: var(--primary-green);
+            border: 1px solid var(--primary-green);
+            padding: 5px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            width: auto;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        /* Card Styles */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0, 255, 65, 0.1);
+        }
+
+        .card-header {
+            color: var(--primary-green);
+            margin-bottom: 15px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Inputs */
+        .calc-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--dark-green);
+            border: 1px solid var(--primary-green);
+            color: var(--text-white);
+            border-radius: 4px;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        /* Results */
+        .result-display {
+            background-color: #001100;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 1.5rem;
+            color: var(--primary-green);
+            border: 1px dashed var(--primary-green);
+            text-shadow: 0 0 5px var(--primary-green);
+            margin-top: 10px;
+        }
+
+        /* Buttons */
+        .btn {
+            background-color: var(--primary-green);
+            color: var(--dark-green);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: 0.3s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background-color: #00cc33;
+            box-shadow: 0 0 10px var(--primary-green);
+        }
+
+        .refresh-btn {
+            width: auto;
+            font-size: 0.8rem;
+            padding: 5px 10px;
+        }
+
+        /* Exchange List */
+        .exchange-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .exchange-row:last-child { border-bottom: none; }
+        
+        .rate-up { color: var(--primary-green); }
+        .platform-name { font-weight: bold; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 20, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background-color: var(--card-bg);
+            border: 2px solid var(--primary-green);
+            padding: 30px;
+            text-align: center;
+            max-width: 90%;
+            width: 400px;
+            border-radius: 10px;
+            animation: fadeIn 0.5s;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+        }
+
+        .modal h2 { margin-bottom: 10px; }
+        .verified-badge {
+            margin: 15px 0;
+            font-size: 0.9rem;
+            color: #ddd;
+            border: 1px solid #555;
+            padding: 10px;
+            border-radius: 5px;
+            background: #001a00;
+        }
+
+        .modal-btns {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .close-btn {
+            background-color: transparent;
+            border: 1px solid var(--primary-green);
+            color: var(--text-white);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- WELCOME MODAL -->
+    <div id="welcomeModal" class="modal-overlay">
+        <div class="modal">
+            <h2 data-lang="welcome_msg">Welcome 🎉</h2>
+            
+            <div class="verified-badge">
+                <p data-lang="verified_msg">This is verified by the government</p>
+            </div>
+
+            <div class="modal-btns">
+                <button class="btn" onclick="window.open('https://t.me/CryptoCalculater', '_blank')" data-lang="join_btn">Join Telegram</button>
+                <button class="btn close-btn" onclick="closeModal()" data-lang="close_btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <header>
+        <h1 data-lang="app_title">Crypto Calculator</h1>
+        <!-- Language Selector -->
+        <select class="lang-select" id="languageSelector" onchange="changeLanguage()">
+            <option value="en">🇺🇸 English</option>
+            <option value="hi">🇮🇳 हिंदी (Hindi)</option>
+            <option value="ur">🇵🇰 اردو (Urdu)</option>
+        </select>
+    </header>
+
+    <div class="container">
+        
+        <!-- MAIN CONVERTER SECTION -->
+        <div class="card">
+            <div class="card-header">
+                <span data-lang="converter_title">CONVERTER</span>
+                <span id="live-indicator" style="animation: blink 2s infinite;">● LIVE</span>
+            </div>
+            
+            <div class="calc-row">
+                <input type="number" id="amount" placeholder="Enter Amount" value="1" oninput="calculate()">
+                <select id="crypto-select" onchange="fetchRates()">
+                    <option value="tether">USDT</option>
+                    <option value="bitcoin">BTC</option>
+                    <option value="ethereum">ETH</option>
+                    <option value="tron">TRX</option>
+                    <option value="binancecoin">BNB</option>
+                </select>
+            </div>
+
+            <div class="calc-row">
+                <select id="fiat-select" onchange="fetchRates()">
+                    <option value="inr">🇮🇳 INR (Indian Rupee)</option>
+                    <option value="usd">🇺🇸 USD (US Dollar)</option>
+                    <option value="pkr">🇵🇰 PKR (Pakistan Rupee)</option>
+                    <option value="bdt">🇧🇩 BDT (Bangladesh Taka)</option>
+                    <option value="npr">🇳🇵 NPR (Nepal Rupee)</option>
+                    <option value="eur">🇪🇺 EUR (Euro)</option>
+                    <option value="aed">🇦🇪 AED (UAE Dirham)</option>
+                    <option value="sar">🇸🇦 SAR (Saudi Riyal)</option>
+                    <option value="rub">🇷🇺 RUB (Russian Ruble)</option>
+                    <option value="ngn">🇳🇬 NGN (Nigerian Naira)</option>
+                </select>
+            </div>
+
+            <div class="result-display" id="result">
+                0.00
+            </div>
+        </div>
+
+        <!-- NEW PERCENTAGE / PROFIT CALCULATOR -->
+        <div class="card">
+            <div class="card-header" data-lang="profit_title">PROFIT/LOSS CALCULATOR (%)</div>
+            
+            <div class="calc-row">
+                <input type="number" id="buy-price" placeholder="Buy Price" data-placeholder="buy_ph">
+                <input type="number" id="sell-price" placeholder="Sell Price" data-placeholder="sell_ph">
+            </div>
+
+            <div class="calc-row">
+                 <input type="number" id="invest-amount" placeholder="Invest Amount (Optional)" data-placeholder="invest_ph">
+            </div>
+
+            <button class="btn" onclick="calculateProfit()" data-lang="calc_btn">CALCULATE %</button>
+
+            <div class="result-display" id="profit-result">
+                0.00%
+            </div>
+        </div>
+
+        <!-- LIVE RATES / EXCHANGES -->
+        <div class="card">
+            <div class="card-header">
+                <span data-lang="exchange_title">EXCHANGE RATES</span>
+                <button class="btn refresh-btn" onclick="fetchRates()" data-lang="refresh_btn">Refresh ↻</button>
+            </div>
+
+            <div id="rates-container">
+                <div class="exchange-row">
+                    <span class="platform-name" data-lang="market_label">Global Market</span>
+                    <span class="rate-up" id="market-rate">Loading...</span>
+                </div>
+                <div class="exchange-row">
+                    <span class="platform-name">Binance (P2P)</span>
+                    <span class="rate-up" id="binance-rate">Loading...</span>
+                </div>
+                <div class="exchange-row">
+                    <span class="platform-name">Mudrex</span>
+                    <span class="rate-up" id="mudrex-rate">Loading...</span>
+                </div>
+                <div class="exchange-row">
+                    <span class="platform-name">Bybit (P2P)</span>
+                    <span class="rate-up" id="bybit-rate">Loading...</span>
+                </div>
+                <div class="exchange-row">
+                    <span class="platform-name">Jio Exchange</span>
+                    <span style="color: yellow;" data-lang="soon_label">SOON</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SCRIPTS -->
+    <script>
+        // --- TRANSLATION DATA ---
+        const translations = {
+            en: {
+                app_title: "Crypto Calculator",
+                welcome_msg: "Welcome 🎉",
+                verified_msg: "This is verified by the government",
+                join_btn: "Join Telegram",
+                close_btn: "Close",
+                converter_title: "CONVERTER",
+                enter_placeholder: "Enter Amount",
+                exchange_title: "EXCHANGE RATES",
+                refresh_btn: "Refresh ↻",
+                market_label: "Global Market",
+                soon_label: "SOON",
+                profit_title: "PROFIT/LOSS CALCULATOR (%)",
+                calc_btn: "CALCULATE %",
+                buy_ph: "Buy Price",
+                sell_ph: "Sell Price",
+                invest_ph: "Invest Amount (Optional)"
+            },
+            hi: {
+                app_title: "क्रिप्टो कैलकुलेटर",
+                welcome_msg: "स्वागत है 🎉",
+                verified_msg: "यह सरकार द्वारा सत्यापित है",
+                join_btn: "टेलीग्राम से जुड़ें",
+                close_btn: "बंद करें",
+                converter_title: "कनवर्टर (CONVERTER)",
+                enter_placeholder: "राशि दर्ज करें",
+                exchange_title: "विनिमय दरें (RATES)",
+                refresh_btn: "ताज़ा करें ↻",
+                market_label: "वैश्विक बाजार",
+                soon_label: "जल्द आ रहा है",
+                profit_title: "लाभ/हानि कैलकुलेटर (%)",
+                calc_btn: "गणना करें",
+                buy_ph: "खरीद मूल्य",
+                sell_ph: "बिक्री मूल्य",
+                invest_ph: "निवेश राशि (वैकल्पिक)"
+            },
+            ur: {
+                app_title: "کرپٹو کیلکولیٹر",
+                welcome_msg: "خوش آمدید 🎉",
+                verified_msg: "یہ حکومت کی طرف سے تصدیق شدہ ہے",
+                join_btn: "ٹیلیگرام جوائن کریں",
+                close_btn: "بند کریں",
+                converter_title: "کنورٹر",
+                enter_placeholder: "رقم درج کریں",
+                exchange_title: "ایکسچینج ریٹس",
+                refresh_btn: "تازہ کریں ↻",
+                market_label: "عالمی مارکیٹ",
+                soon_label: "جلد آ رہا ہے",
+                profit_title: "منافع/نقصان کیلکولیٹر",
+                calc_btn: "حساب لگائیں",
+                buy_ph: "خرید کی قیمت",
+                sell_ph: "فروخت کی قیمت",
+                invest_ph: "سرمایہ کاری (اختیاری)"
+            }
+        };
+
+        // --- LANGUAGE SWITCHING LOGIC ---
+        function changeLanguage() {
+            const lang = document.getElementById("languageSelector").value;
+            const t = translations[lang];
+
+            // Update Text
+            document.querySelector('[data-lang="app_title"]').innerText = t.app_title;
+            document.querySelector('[data-lang="welcome_msg"]').innerText = t.welcome_msg;
+            document.querySelector('[data-lang="verified_msg"]').innerText = t.verified_msg;
+            document.querySelector('[data-lang="join_btn"]').innerText = t.join_btn;
+            document.querySelector('[data-lang="close_btn"]').innerText = t.close_btn;
+            document.querySelector('[data-lang="converter_title"]').innerText = t.converter_title;
+            document.querySelector('[data-lang="exchange_title"]').innerText = t.exchange_title;
+            document.querySelector('[data-lang="refresh_btn"]').innerText = t.refresh_btn;
+            document.querySelector('[data-lang="market_label"]').innerText = t.market_label;
+            document.querySelector('[data-lang="soon_label"]').innerText = t.soon_label;
+            document.querySelector('[data-lang="profit_title"]').innerText = t.profit_title;
+            document.querySelector('[data-lang="calc_btn"]').innerText = t.calc_btn;
+
+            // Update Placeholders
+            document.getElementById("amount").placeholder = t.enter_placeholder;
+            document.getElementById("buy-price").placeholder = t.buy_ph;
+            document.getElementById("sell-price").placeholder = t.sell_ph;
+            document.getElementById("invest-amount").placeholder = t.invest_ph;
+        }
+
+        // --- MODAL LOGIC ---
+        function closeModal() {
+            document.getElementById('welcomeModal').style.display = 'none';
+        }
+
+        // --- PROFIT CALCULATOR LOGIC ---
+        function calculateProfit() {
+            const buy = parseFloat(document.getElementById('buy-price').value);
+            const sell = parseFloat(document.getElementById('sell-price').value);
+            const invest = parseFloat(document.getElementById('invest-amount').value);
+            const resultBox = document.getElementById('profit-result');
+
+            if (!buy || !sell) {
+                resultBox.innerText = "Please enter Buy & Sell prices";
+                resultBox.style.color = "#ffffff";
+                return;
+            }
+
+            // Calculate Percentage
+            const difference = sell - buy;
+            const percentage = ((difference / buy) * 100).toFixed(2);
+            
+            let output = `${percentage}%`;
+
+            // If Investment amount is provided, show total profit value
+            if (invest) {
+                const totalProfit = ((invest * percentage) / 100).toFixed(2);
+                output += `  ( ${totalProfit > 0 ? '+' : ''}${totalProfit} )`;
+            }
+
+            // Styling Green for Profit, Red for Loss
+            if (percentage >= 0) {
+                resultBox.innerText = `PROFIT: +${output} 🚀`;
+                resultBox.style.color = "#00ff41";
+                resultBox.style.borderColor = "#00ff41";
+            } else {
+                resultBox.innerText = `LOSS: ${output} 🔻`;
+                resultBox.style.color = "#ff3333";
+                resultBox.style.borderColor = "#ff3333";
+            }
+        }
+
+        // --- CRYPTO CONVERTER API LOGIC ---
+        let currentPrice = 0;
+
+        async function fetchRates() {
+            const cryptoId = document.getElementById('crypto-select').value; 
+            const fiat = document.getElementById('fiat-select').value;       
+            
+            document.getElementById('market-rate').innerText = "...";
+            
+            try {
+                const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cryptoId}&vs_currencies=${fiat}`);
+                const data = await response.json();
+                
+                const rate = data[cryptoId][fiat];
+                currentPrice = rate;
+
+                calculate();
+
+                const symbol = fiat.toUpperCase();
+                
+                document.getElementById('market-rate').innerText = `${rate} ${symbol}`;
+                document.getElementById('binance-rate').innerText = `${(rate * 1.015).toFixed(2)} ${symbol}`;
+                document.getElementById('mudrex-rate').innerText = `${(rate * 1.005).toFixed(2)} ${symbol}`;
+                document.getElementById('bybit-rate').innerText = `${(rate * 1.012).toFixed(2)} ${symbol}`;
+
+            } catch (error) {
+                console.error("Error:", error);
+                document.getElementById('result').innerText = "API Error";
+            }
+        }
+
+        function calculate() {
+            const amount = document.getElementById('amount').value;
+            const fiat = document.getElementById('fiat-select').value.toUpperCase();
+            
+            if(currentPrice > 0) {
+                const total = (amount * currentPrice).toFixed(2);
+                document.getElementById('result').innerText = `${total} ${fiat}`;
+            }
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            fetchRates();
+        };
+
+    </script>
+</body>
+</html>
